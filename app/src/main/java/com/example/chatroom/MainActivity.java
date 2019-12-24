@@ -12,7 +12,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import java.io.EOFException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
@@ -53,22 +52,27 @@ public class MainActivity extends AppCompatActivity {
         name=intent.getStringExtra("name");
         ip=intent.getStringExtra("ip");
         port=intent.getStringExtra("port");
-        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().detectDiskReads().detectDiskWrites().detectNetwork().penaltyLog().build());
-        StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().detectLeakedSqlLiteObjects().penaltyLog().penaltyDeath().build());
+        //StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().detectDiskReads().detectDiskWrites().detectNetwork().penaltyLog().build());
+       //StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().detectLeakedSqlLiteObjects().penaltyLog().penaltyDeath().build());
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    socket=new Socket(ip,Integer.parseInt(port));
+                    receiveInput=socket.getInputStream();
+                    sendOutput=socket.getOutputStream();
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+                if (socket==null){
+                    Toast.makeText(MyApplication.getContext(),"登入失败",Toast.LENGTH_SHORT).show();
+                    finish();
+                }else {
+                    Toast.makeText(MyApplication.getContext(),"登入成功",Toast.LENGTH_SHORT).show();
+                }
+            }
+        }).start();
 
-        try {
-            socket=new Socket(ip,Integer.parseInt(port));
-            receiveInput=socket.getInputStream();
-            sendOutput=socket.getOutputStream();
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-        if (socket==null){
-            Toast.makeText(this,"登入失败",Toast.LENGTH_SHORT).show();
-            finish();
-        }else {
-            Toast.makeText(this,"登入成功",Toast.LENGTH_SHORT).show();
-        }
 
         new Thread(new Runnable() {
             @Override
