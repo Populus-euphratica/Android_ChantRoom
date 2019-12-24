@@ -1,11 +1,14 @@
 package com.example.chatroom;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.os.StrictMode;
 import android.view.View;
 import android.widget.Button;
@@ -34,11 +37,28 @@ public class MainActivity extends AppCompatActivity {
     private StringBuffer buffer=new StringBuffer();
     private InputStream receiveInput;
     private OutputStream sendOutput;
-
+    private static int UPDATE_TOAST=1;
+    private static int UPDATE_MSG=0;
+    public Message message;
+    private Handler handler=new Handler(){
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            switch (msg.what){
+                case UPDATE_MSG:
+                    msgList.add((Msg) msg.obj);
+                    adapter.notifyItemInserted(msgList.size()-1);
+                    msgRecyclerView.scrollToPosition(msgList.size()-1);
+                    break;
+                case UPDATE_TOAST:
+                    Toast.makeText(MyApplication.getContext(),(String)msg.obj,Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        message=new Message();
         initMsg();
         inputText=(EditText)findViewById(R.id.input);
         send=(Button)findViewById(R.id.send);
@@ -54,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
         port=intent.getStringExtra("port");
         //StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().detectDiskReads().detectDiskWrites().detectNetwork().penaltyLog().build());
        //StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().detectLeakedSqlLiteObjects().penaltyLog().penaltyDeath().build());
+
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -65,10 +86,16 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
                 if (socket==null){
-                    Toast.makeText(MyApplication.getContext(),"登入失败",Toast.LENGTH_SHORT).show();
+
+                    message.obj="登入失败";
+                    message.what=UPDATE_TOAST;
+                    handler.sendMessage(message)
                     finish();
                 }else {
-                    Toast.makeText(MyApplication.getContext(),"登入成功",Toast.LENGTH_SHORT).show();
+                    message.obj="登入成功";
+                    message.what=UPDATE_TOAST;
+                    handler.sendMessage(message)
+                   // Toast.makeText(MyApplication.getContext(),"登入成功",Toast.LENGTH_SHORT).show();
                 }
             }
         }).start();
@@ -85,14 +112,18 @@ public class MainActivity extends AppCompatActivity {
                         while ((len=receiveInput.read(bytes))!=-1){
                             recevieMsg=new String(bytes,0,len);
                             final Msg msg=new Msg(recevieMsg,Msg.TYPE_RECEIVED);
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    msgList.add(msg);
-                                    adapter.notifyItemInserted(msgList.size()-1);
-                                    msgRecyclerView.scrollToPosition(msgList.size()-1);
-                                }
-                            });
+
+                            message.what=UPDATE_MSG;
+                            message.obj=msg;
+                            handler.sendMessage(message)
+//                            runOnUiThread(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                    msgList.add(msg);
+//                                    adapter.notifyItemInserted(msgList.size()-1);
+//                                    msgRecyclerView.scrollToPosition(msgList.size()-1);
+//                                }
+//                            });
                         }
                     }
                 }catch (Exception e){
