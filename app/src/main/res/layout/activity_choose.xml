@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Choose">
+
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_begin="103dp" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_begin="324dp" />
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintLeft_toRightOf="@id/guideline"
+        app:layout_constraintRight_toLeftOf="@id/guideline2"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:id="@+id/people_Chat"
+        android:text="多人聊天"
+        />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/ip_chatName"
+        android:text="IP:"
+        app:layout_constraintLeft_toRightOf="@id/guideline"
+        app:layout_constraintRight_toLeftOf="@+id/ip_chat"
+        app:layout_constraintTop_toBottomOf="@id/people_Chat"/>
+    <EditText
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/ip_chat"
+        app:layout_constraintLeft_toRightOf="@id/ip_chatName"
+        app:layout_constraintRight_toLeftOf="@id/guideline2"
+        app:layout_constraintTop_toBottomOf="@id/people_Chat"
+        app:layout_constraintBaseline_toBaselineOf="@id/ip_chatName"
+        android:maxLines="1"/>
+
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/ip_chat"
+        app:layout_constraintLeft_toRightOf="@id/guideline"
+        app:layout_constraintRight_toLeftOf="@id/guideline2"
+        android:id="@+id/chat"
+        android:text="一对一聊天"/>
+</androidx.constraintlayout.widget.ConstraintLayout>

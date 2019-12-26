@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -28,10 +29,10 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView msgRecyclerView;
     private MsgAdapter adapter;
     private String name;
-    private String ip;
-    private String port;
-    private Socket socket=null;
-    private StringBuffer buffer=new StringBuffer();
+//    private String ip;
+//    private String port;
+    private Socket socket=MyApplication.socket;
+    //private StringBuffer buffer=new StringBuffer();
     private InputStream receiveInput;
     private OutputStream sendOutput;
 
@@ -40,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initMsg();
+        getWindow().setBackgroundDrawableResource(R.drawable.bg3);
         inputText=findViewById(R.id.input);
         send=findViewById(R.id.send);
         msgRecyclerView=findViewById(R.id.msg_recyclerView);
@@ -50,44 +52,20 @@ public class MainActivity extends AppCompatActivity {
 
         Intent intent=getIntent();
         name=intent.getStringExtra("name");
-        ip=intent.getStringExtra("ip");
-        port=intent.getStringExtra("port");
+
 
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    socket=new Socket(ip,Integer.parseInt(port));
-                    receiveInput=socket.getInputStream();
-                    sendOutput=socket.getOutputStream();
+                    receiveInput=MyApplication.inputStream;
+                    sendOutput=MyApplication.outputStream;
                 }catch (Exception e){
                     e.printStackTrace();
                 }
-                if (socket==null){
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(MyApplication.getContext(),"登入失败",Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                    finish();
-                }else {
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(MyApplication.getContext(),"登入成功",Toast.LENGTH_SHORT).show();
-                        }
-                    });
-
-            }
-                socketConnet();
+                receiveMsg();
             }
         }).start();
-
-
-
 
 
         send.setOnClickListener(new View.OnClickListener() {
@@ -96,9 +74,12 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     String content1 = inputText.getText().toString();
                     if (!"".equals(content1)) {
-                        String date = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss").format(new Date());
-                        buffer.append(content1).append("\n\n").append("来自:").append(name).append(date);
-                        content1 = buffer.toString();
+                        //String date = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss").format(new Date());
+//                        buffer.append(content1).append("\n\n").append("来自:").append(name).append(date);
+//
+                        content1+="\n";
+                        content1=content1+"来自:"+name;
+//                        content1 = buffer.toString();
                         final String str=content1;
                         new Thread(new Runnable() {
                             @Override
@@ -110,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
                                }
                             }
                         }).start();
-                        buffer.delete(0, buffer.length());
+//                        buffer.delete(0, buffer.length());
                         final Msg msg = new Msg(content1, Msg.TYPE_SEND);
                         runOnUiThread(new Runnable() {
                             @Override
@@ -128,7 +109,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-
     public void initMsg(){
         Msg msg1=new Msg("你好",Msg.TYPE_RECEIVED);
         msgList.add(msg1);
@@ -137,18 +117,22 @@ public class MainActivity extends AppCompatActivity {
         Msg msg3=new Msg("我是曹子浩",Msg.TYPE_RECEIVED);
         msgList.add(msg3);
     }
-    public void socketConnet() {
-
-
+    //接受服务器传来的信息
+    public void receiveMsg() {
             byte[] bytes = new byte[1024 * 3];
             int len;
             String recevieMsg;
+            String sign;
             while (true) {
                 try {
                     while ((len = receiveInput.read(bytes)) != -1) {
                         recevieMsg = new String(bytes, 0, len);
+                        sign=recevieMsg.substring(0,5);
+                        if (sign.equals("#chat")){
+                            Intent intent=new Intent(this,Chat.class);
+                            startActivity(intent);
+                        }
                         final Msg msg = new Msg(recevieMsg, Msg.TYPE_RECEIVED);
-
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
