@@ -23,7 +23,8 @@ public class Choose extends AppCompatActivity implements View.OnClickListener {
     private Intent intent1;
     private InputStream receiveInput;
     private OutputStream sendOutPut;
-    private static Semaphore semaphore = new Semaphore(1);
+    private Thread thread;
+    private static Semaphore semaphore = new Semaphore(5);
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,13 +40,15 @@ public class Choose extends AppCompatActivity implements View.OnClickListener {
         try {
             receiveInput = MyApplication.inputStream;
             sendOutPut = MyApplication.outputStream;
-            new Thread(new Runnable() {
+            thread=new Thread(new Runnable() {
                 @Override
                 public void run() {
                     receiveMsg();
-                    System.out.println(semaphore.availablePermits()+"+++++++++++++++++++++++++++++++++");
+                    System.out.println(semaphore.availablePermits()+"16531361+++++++++++++++++++++++++++++++++");
+                    return;
                 }
-            }).start();
+            });
+            thread.run();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -65,7 +68,7 @@ public class Choose extends AppCompatActivity implements View.OnClickListener {
 
                 while ((len = receiveInput.read(bytes)) != -1) {
                     recevieMsg = new String(bytes, 0, len);
-                   // System.out.println(recevieMsg);
+                    System.out.println(recevieMsg);
                     System.out.println(semaphore.availablePermits()+"+++++++++++++++++++++++++++++++++");
                     sign = recevieMsg.substring(0, 5);
                     if (sign.equals("#chat")) {
@@ -80,9 +83,9 @@ public class Choose extends AppCompatActivity implements View.OnClickListener {
                     }
                 }
                 semaphore.release();
-              /*  if (semaphore.availablePermits()<=2) {
+                if (semaphore.availablePermits()<=4) {
                     break;
-                }*/
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -104,10 +107,12 @@ public class Choose extends AppCompatActivity implements View.OnClickListener {
                 intent.putExtra("name", name);
                 try {
                     semaphore.acquire();
+                    thread.wait();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
                 System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++");
+
                 startActivity(intent);
                 try {
                     semaphore.acquire();
