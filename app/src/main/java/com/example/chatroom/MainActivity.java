@@ -119,19 +119,22 @@ public class MainActivity extends AppCompatActivity {
     }
     //接受服务器传来的信息
     public void receiveMsg() {
-            byte[] bytes = new byte[1024 * 3];
+            byte[] bytes = new byte[1024];
             int len;
             String recevieMsg;
             String sign;
-            while (true) {
+            boolean istrue=true;
+            while (istrue) {
                 try {
                     while ((len = receiveInput.read(bytes)) != -1) {
                         recevieMsg = new String(bytes, 0, len);
-                        sign=recevieMsg.substring(0,5);
-                        if (sign.equals("#chat")){
-                            Intent intent=new Intent(this,Chat.class);
-                            startActivity(intent);
-                        }
+//                        sign=recevieMsg.substring(0,5);
+//                        if (sign.equals("#chat")){
+//                            Intent intent=new Intent(this,Chat.class);
+//                            startActivity(intent);
+//                            istrue=false;
+//                            break;
+//                        }
                         final Msg msg = new Msg(recevieMsg, Msg.TYPE_RECEIVED);
                         runOnUiThread(new Runnable() {
                             @Override

@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -11,6 +12,7 @@ import android.widget.Toast;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.concurrent.Semaphore;
 
 public class Choose extends AppCompatActivity implements View.OnClickListener {
     private Button people;
@@ -21,115 +23,157 @@ public class Choose extends AppCompatActivity implements View.OnClickListener {
     private Intent intent1;
     private InputStream receiveInput;
     private OutputStream sendOutPut;
+    private static Semaphore semaphore = new Semaphore(1);
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_choose);
-        people=findViewById(R.id.people_Chat);
+        people = findViewById(R.id.people_Chat);
         people.setOnClickListener(this);
-        chat=findViewById(R.id.chat);
+        chat = findViewById(R.id.chat);
         chat.setOnClickListener(this);
-        ip_Input=findViewById(R.id.ip_chat);
+        ip_Input = findViewById(R.id.ip_chat);
         ip_Input.setText("192.168.43.");
-        intent1=getIntent();
-        name=intent1.getStringExtra("name");
+        intent1 = getIntent();
+        name = intent1.getStringExtra("name");
         try {
-            receiveInput=MyApplication.inputStream;
-            sendOutPut=MyApplication.outputStream;
-        }catch (Exception e){
+            receiveInput = MyApplication.inputStream;
+            sendOutPut = MyApplication.outputStream;
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    receiveMsg();
+                    System.out.println(semaphore.availablePermits()+"+++++++++++++++++++++++++++++++++");
+                }
+            }).start();
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                receiveMsg();
-            }
-        }).start();
 
 
     }
 
-    //接受服务器传来的信息
     public void receiveMsg() {
-
-
-        byte[] bytes = new byte[1024 * 3];
+        byte[] bytes = new byte[1024];
         int len;
         String recevieMsg;
         String sign;
-        while (true) {
+        boolean istrue=true;
+        while (istrue) {
             try {
+                semaphore.acquire();
+
                 while ((len = receiveInput.read(bytes)) != -1) {
                     recevieMsg = new String(bytes, 0, len);
-
-                    sign=recevieMsg.substring(0,5);
-                    if (sign.equals("#chat")){
-                            recevieMsg="#accp"+recevieMsg.substring(5,len);
-                            sendMes(recevieMsg);
-                        Intent intent=new Intent(this,Chat.class);
-                        intent.putExtra("name",name);
+                   // System.out.println(recevieMsg);
+                    System.out.println(semaphore.availablePermits()+"+++++++++++++++++++++++++++++++++");
+                    sign = recevieMsg.substring(0, 5);
+                    if (sign.equals("#chat")) {
+                        recevieMsg = "#accp" + recevieMsg.substring(5, len);
+                        sendOutPut.write(recevieMsg.getBytes());
+                        Intent intent = new Intent(this, Chat.class);
+                        intent.putExtra("name", name);
+                        semaphore.acquire();
+//                        closeStream();
                         startActivity(intent);
                         break;
                     }
                 }
+                semaphore.release();
+              /*  if (semaphore.availablePermits()<=2) {
+                    break;
+                }*/
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-
-
+        System.out.println("我出来了");
     }
+
+
+    //接受服务器传来的信息
 
 
     @Override
     public void onClick(View v) {
 
-            switch (v.getId()){
-                case R.id.people_Chat:
+        switch (v.getId()) {
+            case R.id.people_Chat:
 //                    closeStream();
-                    Intent intent=new Intent(Choose.this,MainActivity.class);
-                    intent.putExtra("name",name);
-                    startActivity(intent);
+                Intent intent = new Intent(Choose.this, MainActivity.class);
+                intent.putExtra("name", name);
+                try {
+                    semaphore.acquire();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++");
+                startActivity(intent);
+                try {
+                    semaphore.acquire();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                break;
+            case R.id.chat:
+                ip = ip_Input.getText().toString();
+                if (ip.equals("")) {
+                    Toast.makeText(MyApplication.getContext(), "请输入IP", Toast.LENGTH_SHORT).show();
                     break;
-                case R.id.chat:
-                    ip=ip_Input.getText().toString();
-                    if (ip.equals("")){
-                        Toast.makeText(MyApplication.getContext(), "请输入IP", Toast.LENGTH_SHORT).show();
-                        break;
-                    }
-//                    closeStream();
-                    sendMes("#chat"+ip);
-                    Intent intent2=new Intent(Choose.this,Chat.class);
-                    intent2.putExtra("name",name);
-                    startActivity(intent2);
-                    break;
-            }
-    }
-    public void closeStream(){
-        try {
-            receiveInput.close();
-            sendOutPut.close();
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-    }
+                }
 
-    public void sendMes(final String content){
-        try {
+//                sendMes("#chat" + ip);
+                final String sign="#chat" + ip;
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
                         try {
-                            sendOutPut.write(content.getBytes());
-                        }catch (Exception e){
+                            Log.d("Choose", "run: "+sign);
+                            sendOutPut.write(sign.getBytes());
+                        } catch (Exception e) {
                             e.printStackTrace();
                         }
                     }
                 }).start();
-            } catch (Exception e){
+                Intent intent2 = new Intent(Choose.this, Chat.class);
+                intent2.putExtra("name", name);
+                startActivity(intent2);
+                try {
+                    semaphore.acquire();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                break;
+        }
+    }
+
+    public void closeStream() {
+        try {
+            receiveInput.close();
+            sendOutPut.close();
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    public void sendMes(final String content) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    sendOutPut.write(content.getBytes());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
 
+
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+    }
 }

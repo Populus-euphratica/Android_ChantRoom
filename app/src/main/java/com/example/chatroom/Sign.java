@@ -26,7 +26,7 @@ public class Sign extends AppCompatActivity {
         ip=(EditText)findViewById(R.id.ip_input);
         port=(EditText)findViewById(R.id.port_input);
         sign=(Button)findViewById(R.id.enter);
-        ip.setText("192.168.43.115");
+        ip.setText("192.168.137.1");
         port.setText("8564");
         sign.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -49,7 +49,7 @@ public class Sign extends AppCompatActivity {
 //                    Toast.makeText(MyApplication.getContext(), "登入成功", Toast.LENGTH_SHORT).show();
 //
 //                }
-                Intent intent = new Intent(Sign.this, MainActivity.class);
+                Intent intent = new Intent(Sign.this, Choose.class);
                 intent.putExtra("name", name.getText().toString());
                 startActivity(intent);
             }

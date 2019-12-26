@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -55,8 +56,8 @@ public class Chat extends AppCompatActivity {
             @Override
             public void run() {
                 try {
-                    receiveInput=socket.getInputStream();
-                    sendOutput=socket.getOutputStream();
+                    receiveInput=MyApplication.socket.getInputStream();
+                    sendOutput=MyApplication.socket.getOutputStream();
                 }catch (Exception e){
                     e.printStackTrace();
                 }
@@ -79,16 +80,16 @@ public class Chat extends AppCompatActivity {
     public void receiveMsg() {
 
 
-        byte[] bytes = new byte[1024 * 3];
+        byte[] bytes = new byte[1024];
         int len;
         String recevieMsg;
-
-        while (true) {
+        boolean istrue=true;
+        while (istrue) {
             try {
                 while ((len = receiveInput.read(bytes)) != -1) {
                     recevieMsg = new String(bytes, 0, len);
                     final Msg msg = new Msg(recevieMsg, Msg.TYPE_RECEIVED);
-
+                    Log.d("Chat",recevieMsg);
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
